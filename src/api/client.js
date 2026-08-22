@@ -4,9 +4,7 @@ import axios from 'axios';
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
   timeout: 30000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  // Let Axios automatically infer the Content-Type based on the payload (JSON vs FormData)
 });
 
 // Response interceptor for generic error handling
@@ -19,10 +17,17 @@ apiClient.interceptors.response.use(
     let errorMessage = 'An unexpected server error occurred.';
     
     if (error.response) {
-      // The request was made and the server responded with a status code
-      // that falls out of the range of 2xx
       if (error.response.data && error.response.data.detail) {
-        errorMessage = error.response.data.detail;
+        const detail = error.response.data.detail;
+        if (Array.isArray(detail)) {
+          // Handle FastAPI 422 Validation errors
+          errorMessage = detail.map(e => e.msg).join(', ');
+        } else if (typeof detail === 'object' && detail !== null) {
+          // Handle structured errors
+          errorMessage = detail.message || JSON.stringify(detail);
+        } else {
+          errorMessage = detail;
+        }
       } else {
         errorMessage = `Server error: ${error.response.status}`;
       }

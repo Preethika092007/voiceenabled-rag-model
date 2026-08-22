@@ -3,7 +3,7 @@ import json
 from fastapi import APIRouter, UploadFile, File, HTTPException, status
 from pydantic import ValidationError
 from .models import HealthResponse, TextQueryRequest, TextQueryResponse, VoiceQueryResponse, DatasetStatusResponse
-from services.sarvam_stt import transcribe_audio
+from services.elevenlabs_stt import transcribe_audio
 from services.vector_retrieval import vector_retriever
 from services.bm25_retrieval import bm25_retriever
 from services.reranker import reranker
@@ -85,7 +85,7 @@ async def submit_voice_query(audio: UploadFile = File(...)):
     if not audio:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No audio file provided."
+            detail={"error": "INVALID_AUDIO", "message": "No audio file provided."}
         )
         
     # Read a chunk to verify it's not empty and get size
@@ -95,24 +95,24 @@ async def submit_voice_query(audio: UploadFile = File(...)):
     if file_size == 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Audio file is empty."
+            detail={"error": "INVALID_AUDIO", "message": "The uploaded audio file is empty."}
         )
         
+    # Browser recordings produce formats like audio/webm, audio/ogg, audio/mp4
     if audio.content_type and not audio.content_type.startswith("audio/"):
         raise HTTPException(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            detail=f"Unsupported file format: {audio.content_type}. Please upload an audio file."
+            detail={"error": "UNSUPPORTED_MEDIA_TYPE", "message": f"Unsupported file format: {audio.content_type}. Please upload an audio file."}
         )
         
     # Send to Sarvam STT
     success, result = await transcribe_audio(content, audio.filename or "recording.webm", audio.content_type or "audio/webm")
     
     if not success:
-        # Returning a 200 with an error message so frontend can display it cleanly without throwing an unhandled rejection,
-        # but the spec asks for structured response. Let's return 400 with detail.
+        # result contains the error message from Sarvam
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=result
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail={"error": "STT_PROVIDER_ERROR", "message": result}
         )
 
     return VoiceQueryResponse(

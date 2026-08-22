@@ -1,10 +1,22 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-background: #0B0F19;
+  --color-surface: #151C2C;
+  --color-surface-highlight: #1A233A;
+  --color-primary: #4F46E5;
+  --color-primary-hover: #4338CA;
+  --color-text-main: #F8FAFC;
+  --color-text-muted: #94A3B8;
+  --color-border-main: #1E293B;
+}
 
 @layer base {
   body {
-    @apply bg-background text-textMain font-sans antialiased;
+    background-color: var(--color-background);
+    color: var(--color-text-main);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
   }
 }
 
@@ -14,11 +26,12 @@
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  @apply bg-background;
+  background-color: var(--color-background);
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-borderMain rounded-full;
+  background-color: var(--color-border-main);
+  border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-textMuted;
+  background-color: var(--color-text-muted);
 }

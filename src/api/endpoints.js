@@ -34,15 +34,17 @@ export const api = {
    * @returns {Promise<{status: str, message: str, content_type: str, file_size: int, filename: str}>}
    */
   submitVoiceQuery: async (audioBlob) => {
+    console.log("Voice Query Upload Debug:", {
+      size: audioBlob.size,
+      type: audioBlob.type,
+      filename: 'recording.webm'
+    });
+
     const formData = new FormData();
     // Use a default filename; the content-type is determined by the Blob
     formData.append('audio', audioBlob, 'recording.webm');
     
-    // Use the base axios instance directly to override headers for FormData
-    return await apiClient.post('/voice-query', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    // Axios will automatically set the correct Content-Type with the generated boundary
+    return await apiClient.post('/voice-query', formData);
   },
 };
