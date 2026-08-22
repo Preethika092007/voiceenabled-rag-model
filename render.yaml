@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: echorag-backend
+    env: docker
+    dockerfilePath: ./backend/Dockerfile
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: ALLOWED_ORIGINS
+        value: "https://your-frontend.vercel.app"
+      - key: LLM_API_KEY
+        sync: false
+      - key: SARVAM_API_KEY
+        sync: false
+    plan: standard # Or higher, depending on FAISS/Cross-encoder memory needs (1GB+ RAM recommended)
