@@ -2,6 +2,8 @@
 
 A modern, voice-enabled Retrieval-Augmented Generation (RAG) system built with React, FastAPI, Groq (Llama 3), ElevenLabs, and FAISS.
 
+**📺 Demo Video:** [Watch the EchoRAG Demo](https://drive.google.com/drive/folders/1J8r0fs-z5gEDTByqJwLnfClfXJcNVmhi)
+
 ## Architecture
 
 EchoRAG utilizes a split-stack architecture to maintain a lightweight frontend while supporting heavy Machine Learning dependencies on the backend.
