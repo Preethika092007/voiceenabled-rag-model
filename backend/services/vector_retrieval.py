@@ -37,6 +37,8 @@ class VectorRetriever:
                 manifest = json.load(f)
                 
             model_name = manifest.get("embedding_model", "all-MiniLM-L6-v2")
+            import gc
+            gc.collect() # Force garbage collection
             logger.info(f"Loading embedding model: {model_name}...")
             self.model = SentenceTransformer(model_name, device="cpu")
             self.model.eval()

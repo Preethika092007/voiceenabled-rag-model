@@ -1,4 +1,11 @@
 import os
+import torch
+# AGGRESSIVE MEMORY OPTIMIZATION FOR 512MB RAM:
+# Limit PyTorch to 1 thread to prevent massive thread-pool memory allocation
+torch.set_num_threads(1)
+# Globally disable gradients since we only do inference
+torch.set_grad_enabled(False)
+
 from dotenv import load_dotenv
 load_dotenv()
 

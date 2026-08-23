@@ -20,6 +20,8 @@ class CrossEncoderRetriever:
             return
             
         try:
+            import gc
+            gc.collect() # Force garbage collection before loading heavy model
             logger.info(f"Loading CrossEncoder reranker: {RERANKER_MODEL}...")
             self.model = CrossEncoder(RERANKER_MODEL, device="cpu")
             self.model.model.eval()
