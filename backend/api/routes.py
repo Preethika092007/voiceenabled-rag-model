@@ -32,15 +32,7 @@ async def dataset_status():
     """Check if the offline MSMARCO preprocessing has completed."""
     manifest_path = os.path.join(os.path.dirname(__file__), "..", "data", "index", "index_manifest.json")
     if os.path.exists(manifest_path):
-        if vector_retriever.is_ready and bm25_retriever.is_ready:
-            return DatasetStatusResponse(status="ready", message="Knowledge Base & Indices Ready")
-        else:
-            # Try to load them if not loaded
-            vector_retriever.load()
-            bm25_retriever.load()
-            if vector_retriever.is_ready and bm25_retriever.is_ready:
-                return DatasetStatusResponse(status="ready", message="Knowledge Base & Indices Ready")
-            return DatasetStatusResponse(status="not_prepared", message="Knowledge Base Prepared, but Indices missing.")
+        return DatasetStatusResponse(status="ready", message="Knowledge Base & Indices Ready")
     return DatasetStatusResponse(status="not_prepared", message="Knowledge Base Not Prepared")
 
 @router.get("/benchmark-results")
@@ -92,12 +84,21 @@ async def submit_query(request: TextQueryRequest):
             detail="Query cannot be empty or just whitespace."
         )
         
+    if not vector_retriever.is_ready:
+        vector_retriever.load()
+    if not bm25_retriever.is_ready:
+        bm25_retriever.load()
+    if not reranker.is_ready:
+        reranker.load()
+        
     if not vector_retriever.is_ready or not bm25_retriever.is_ready:
         return TextQueryResponse(
             status="error",
             query=request.query,
             message="Knowledge base index is not ready. Run the embedding/index build process first.",
-            results=[]
+            results=[],
+            sources=[],
+            pipeline={"error": "true"}
         )
         
     # Perform full pipeline
