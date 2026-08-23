@@ -39,7 +39,6 @@ ENV/
 
 # EchoRAG specific large artifacts
 backend/data/processed/
-backend/data/index/
 backend/data/benchmark_results.json
 
 # Hugging Face caches

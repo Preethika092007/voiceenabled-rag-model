@@ -1,0 +1,27 @@
+{
+  "0": {
+    "chunk_id": "0",
+    "text": "The normal resting heart rate for adults ranges from 60 to 100 beats per minute.",
+    "parent_id": "0"
+  },
+  "1": {
+    "chunk_id": "1",
+    "text": "A physician assistant (PA) is a mid-level medical practitioner who works under the supervision of a licensed doctor.",
+    "parent_id": "1"
+  },
+  "2": {
+    "chunk_id": "2",
+    "text": "A corporation is an organization usually a group of people or a company authorized by the state to act as a single entity.",
+    "parent_id": "2"
+  },
+  "3": {
+    "chunk_id": "3",
+    "text": "The typical real estate agent commission is between 5% and 6% of the home's sale price.",
+    "parent_id": "3"
+  },
+  "4": {
+    "chunk_id": "4",
+    "text": "Alaska is the largest state in the United States by total area.",
+    "parent_id": "4"
+  }
+}

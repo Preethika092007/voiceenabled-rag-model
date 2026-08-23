@@ -13,23 +13,10 @@ router = APIRouter()
 
 @router.on_event("startup")
 async def startup_event():
-    index_path = os.path.join(os.path.dirname(__file__), "..", "data", "index", "faiss.index")
-    if not os.path.exists(index_path):
-        import subprocess
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.info("Knowledge base index missing. Bootstrapping with a small sample...")
-        os.environ["PREPROCESS_SAMPLE_SIZE"] = "15"
-        try:
-            # Run the lightweight dummy index script to safely bootstrap the backend on Render
-            script_path = os.path.join(os.path.dirname(__file__), "..", "scripts", "create_dummy_index.py")
-            subprocess.run(["python", script_path], check=True)
-            logger.info("Bootstrapping complete.")
-        except Exception as e:
-            logger.error(f"Failed to bootstrap index: {e}")
-
+    # Index files are now committed to git to prevent OOM spikes on Render
     # Removed eager loading: models will now load lazily on first request
     # to prevent OOM on Render 512MB free tier during deployment binding.
+    pass
 
 @router.get("/health", response_model=HealthResponse)
 async def health_check():
