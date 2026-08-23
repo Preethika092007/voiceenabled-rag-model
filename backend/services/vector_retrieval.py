@@ -36,7 +36,7 @@ class VectorRetriever:
                 manifest = json.load(f)
                 
             model_name = manifest.get("embedding_model", "all-MiniLM-L6-v2")
-            self.model_url = f"https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/{model_name}"
+            self.model_url = f"https://router.huggingface.co/hf-inference/pipeline/feature-extraction/sentence-transformers/{model_name}"
             
             logger.info("Loading FAISS index...")
             self.index = faiss.read_index(FAISS_INDEX_FILE)

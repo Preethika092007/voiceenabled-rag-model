@@ -20,7 +20,7 @@ class CrossEncoderRetriever:
             return
             
         try:
-            self.model_url = f"https://api-inference.huggingface.co/models/{RERANKER_MODEL}"
+            self.model_url = f"https://router.huggingface.co/hf-inference/models/{RERANKER_MODEL}"
             self.is_ready = True
             logger.info("Reranker setup complete via HF Inference API")
         except Exception as e:
