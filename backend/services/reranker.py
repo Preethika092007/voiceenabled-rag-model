@@ -1,6 +1,7 @@
 import os
 import logging
 import time
+import torch
 from typing import List, Dict, Any
 from sentence_transformers import CrossEncoder
 
@@ -20,13 +21,15 @@ class CrossEncoderRetriever:
             
         try:
             logger.info(f"Loading CrossEncoder reranker: {RERANKER_MODEL}...")
-            self.model = CrossEncoder(RERANKER_MODEL)
+            self.model = CrossEncoder(RERANKER_MODEL, device="cpu")
+            self.model.model.eval()
             self.is_ready = True
             logger.info("CrossEncoder loaded successfully.")
         except Exception as e:
             logger.error(f"Failed to load CrossEncoder reranker: {e}")
             
     def score_and_sort(self, query: str, candidates: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        self.load()
         if not self.is_ready or not candidates:
             return []
             
@@ -36,7 +39,8 @@ class CrossEncoderRetriever:
         pairs = [[query, c["text"]] for c in candidates]
         
         # Predict scores
-        scores = self.model.predict(pairs)
+        with torch.no_grad():
+            scores = self.model.predict(pairs)
         
         # Attach scores and sort
         scored_candidates = []

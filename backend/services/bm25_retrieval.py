@@ -43,6 +43,7 @@ class BM25Retriever:
             logger.error(f"Failed to load BM25 Retriever: {e}")
             
     def search(self, query: str, top_k: int = 10) -> List[Dict[str, Any]]:
+        self.load()
         if not self.is_ready:
             return []
             

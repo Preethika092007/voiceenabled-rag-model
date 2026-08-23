@@ -3,6 +3,7 @@ import json
 import faiss
 import logging
 import time
+import torch
 from typing import List, Dict, Any
 from sentence_transformers import SentenceTransformer
 
@@ -37,7 +38,8 @@ class VectorRetriever:
                 
             model_name = manifest.get("embedding_model", "all-MiniLM-L6-v2")
             logger.info(f"Loading embedding model: {model_name}...")
-            self.model = SentenceTransformer(model_name)
+            self.model = SentenceTransformer(model_name, device="cpu")
+            self.model.eval()
             
             logger.info("Loading FAISS index...")
             self.index = faiss.read_index(FAISS_INDEX_FILE)
@@ -52,13 +54,15 @@ class VectorRetriever:
             logger.error(f"Failed to load Vector Retriever: {e}")
             
     def search(self, query: str, top_k: int = 10) -> List[Dict[str, Any]]:
+        self.load()
         if not self.is_ready:
             return []
             
         start_time = time.perf_counter()
         
         # Encode query
-        query_embedding = self.model.encode([query], normalize_embeddings=True, convert_to_numpy=True)
+        with torch.no_grad():
+            query_embedding = self.model.encode([query], normalize_embeddings=True, convert_to_numpy=True)
         
         # Search
         scores, indices = self.index.search(query_embedding, top_k)

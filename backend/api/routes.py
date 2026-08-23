@@ -28,10 +28,8 @@ async def startup_event():
         except Exception as e:
             logger.error(f"Failed to bootstrap index: {e}")
 
-    # Load indices asynchronously or in background thread, but for simplicity, load directly
-    vector_retriever.load()
-    bm25_retriever.load()
-    reranker.load()
+    # Removed eager loading: models will now load lazily on first request
+    # to prevent OOM on Render 512MB free tier during deployment binding.
 
 @router.get("/health", response_model=HealthResponse)
 async def health_check():
@@ -66,6 +64,37 @@ async def get_benchmark_results():
         with open(results_path, "r", encoding="utf-8") as f:
             return json.load(f)
     return {"status": "not_found", "message": "No benchmark results available yet."}
+
+@router.get("/memory-audit")
+async def memory_audit():
+    """Diagnostic endpoint to measure incremental RAM usage."""
+    import psutil
+    process = psutil.Process(os.getpid())
+    
+    def get_mem():
+        return f"{process.memory_info().rss / 1024 / 1024:.2f} MB"
+        
+    audit_results = {
+        "1_startup_baseline": get_mem()
+    }
+    
+    try:
+        bm25_retriever.load()
+        audit_results["2_after_bm25_load"] = get_mem()
+        
+        vector_retriever.load()
+        audit_results["3_after_faiss_and_embedder_load"] = get_mem()
+        
+        reranker.load()
+        audit_results["4_after_cross_encoder_load"] = get_mem()
+        
+        audit_results["5_final_idle_memory"] = get_mem()
+        audit_results["status"] = "success"
+    except Exception as e:
+        audit_results["error"] = str(e)
+        audit_results["status"] = "failed"
+        
+    return audit_results
 
 @router.post("/query", response_model=TextQueryResponse)
 async def submit_query(request: TextQueryRequest):
