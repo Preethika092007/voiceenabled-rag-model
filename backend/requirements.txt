@@ -9,3 +9,6 @@ openai
 langgraph
 langchain-core
 numpy
+
+python-dotenv
+httpx
