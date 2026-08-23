@@ -13,16 +13,16 @@ router = APIRouter()
 
 @router.on_event("startup")
 async def startup_event():
-    manifest_path = os.path.join(os.path.dirname(__file__), "..", "data", "processed", "manifest.json")
-    if not os.path.exists(manifest_path):
+    index_path = os.path.join(os.path.dirname(__file__), "..", "data", "index", "faiss.index")
+    if not os.path.exists(index_path):
         import subprocess
         import logging
         logger = logging.getLogger(__name__)
         logger.info("Knowledge base index missing. Bootstrapping with a small sample...")
         os.environ["PREPROCESS_SAMPLE_SIZE"] = "15"
         try:
-            # Try to run the preprocess script to generate a small index
-            script_path = os.path.join(os.path.dirname(__file__), "..", "scripts", "preprocess_msmarco.py")
+            # Run the lightweight dummy index script to safely bootstrap the backend on Render
+            script_path = os.path.join(os.path.dirname(__file__), "..", "scripts", "create_dummy_index.py")
             subprocess.run(["python", script_path], check=True)
             logger.info("Bootstrapping complete.")
         except Exception as e:
