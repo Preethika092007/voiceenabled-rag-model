@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create an Axios instance with base configuration
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://echorag-backend.onrender.com',
+  baseURL: import.meta.env.VITE_API_URL || 'https://echorag-backend.onrender.com',
   timeout: 30000,
   // Let Axios automatically infer the Content-Type based on the payload (JSON vs FormData)
 });
