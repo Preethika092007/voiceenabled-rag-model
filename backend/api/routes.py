@@ -13,6 +13,21 @@ router = APIRouter()
 
 @router.on_event("startup")
 async def startup_event():
+    manifest_path = os.path.join(os.path.dirname(__file__), "..", "data", "processed", "manifest.json")
+    if not os.path.exists(manifest_path):
+        import subprocess
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info("Knowledge base index missing. Bootstrapping with a small sample...")
+        os.environ["PREPROCESS_SAMPLE_SIZE"] = "15"
+        try:
+            # Try to run the preprocess script to generate a small index
+            script_path = os.path.join(os.path.dirname(__file__), "..", "scripts", "preprocess_msmarco.py")
+            subprocess.run(["python", script_path], check=True)
+            logger.info("Bootstrapping complete.")
+        except Exception as e:
+            logger.error(f"Failed to bootstrap index: {e}")
+
     # Load indices asynchronously or in background thread, but for simplicity, load directly
     vector_retriever.load()
     bm25_retriever.load()
