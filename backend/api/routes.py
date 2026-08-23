@@ -30,7 +30,7 @@ async def health_check():
 @router.get("/dataset-status", response_model=DatasetStatusResponse)
 async def dataset_status():
     """Check if the offline MSMARCO preprocessing has completed."""
-    manifest_path = os.path.join(os.path.dirname(__file__), "..", "data", "processed", "manifest.json")
+    manifest_path = os.path.join(os.path.dirname(__file__), "..", "data", "index", "index_manifest.json")
     if os.path.exists(manifest_path):
         if vector_retriever.is_ready and bm25_retriever.is_ready:
             return DatasetStatusResponse(status="ready", message="Knowledge Base & Indices Ready")
