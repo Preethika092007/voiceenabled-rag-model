@@ -44,3 +44,5 @@ backend/data/benchmark_results.json
 
 # Hugging Face caches
 hf_*/
+
+.vercel

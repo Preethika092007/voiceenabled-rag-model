@@ -105,20 +105,43 @@ async def submit_voice_query(audio: UploadFile = File(...)):
             detail={"error": "UNSUPPORTED_MEDIA_TYPE", "message": f"Unsupported file format: {audio.content_type}. Please upload an audio file."}
         )
         
-    # Send to Sarvam STT
-    success, result = await transcribe_audio(content, audio.filename or "recording.webm", audio.content_type or "audio/webm")
+    # Send to ElevenLabs STT
+    result = await transcribe_audio(content, audio.filename or "recording.webm", audio.content_type or "audio/webm")
     
-    if not success:
-        # result contains the error message from Sarvam
+    if not result.get("success"):
+        import logging
+        import json
+        logger = logging.getLogger(__name__)
+        
+        # Log SAFE structured error as requested
+        safe_log = {
+            "provider": result.get("provider"),
+            "stage": result.get("stage"),
+            "upstream_status": result.get("status_code"),
+            "message": result.get("message"),
+            "request_id": result.get("request_id")
+        }
+        logger.error(json.dumps(safe_log))
+        
+        # Raise HTTP exception with mapped status code
+        status_code = result.get("status_code", 502)
+        
+        # For quota exceeded, explicitly use 429 to be accurate, but 502 is also okay for upstream proxy.
+        # We will use exactly what ElevenLabs returned, or 500/502.
+        
+        error_code = "STT_PROVIDER_ERROR"
+        if status_code == 429:
+            error_code = "STT_QUOTA_EXCEEDED"
+            
         raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail={"error": "STT_PROVIDER_ERROR", "message": result}
+            status_code=status_code,
+            detail={"error": error_code, "message": result.get("message")}
         )
 
     return VoiceQueryResponse(
         status="success",
         message="Audio transcribed successfully",
-        transcript=result,
+        transcript=result.get("transcript"),
         content_type=audio.content_type,
         file_size=file_size,
         filename=audio.filename
