@@ -1,9 +1,8 @@
 import os
 import logging
 import time
-import torch
 from typing import List, Dict, Any
-from sentence_transformers import CrossEncoder
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +12,7 @@ RERANK_TOP_K = int(os.getenv("RERANK_TOP_K", "5"))
 class CrossEncoderRetriever:
     def __init__(self):
         self.model = None
+        self.model_url = None
         self.is_ready = False
         
     def load(self):
@@ -20,13 +20,9 @@ class CrossEncoderRetriever:
             return
             
         try:
-            import gc
-            gc.collect() # Force garbage collection before loading heavy model
-            logger.info(f"Loading CrossEncoder reranker: {RERANKER_MODEL}...")
-            self.model = CrossEncoder(RERANKER_MODEL, device="cpu")
-            self.model.model.eval()
+            self.model_url = f"https://api-inference.huggingface.co/models/{RERANKER_MODEL}"
             self.is_ready = True
-            logger.info("CrossEncoder loaded successfully.")
+            logger.info("Reranker setup complete via HF Inference API")
         except Exception as e:
             logger.error(f"Failed to load CrossEncoder reranker: {e}")
             
@@ -37,18 +33,31 @@ class CrossEncoderRetriever:
             
         start_time = time.perf_counter()
         
-        # Create (query, text) pairs
-        pairs = [[query, c["text"]] for c in candidates]
+        passages = [c["text"] for c in candidates]
         
-        # Predict scores
-        with torch.no_grad():
-            scores = self.model.predict(pairs)
+        # Query HuggingFace API
+        headers = {"Authorization": f"Bearer {os.environ.get('HF_TOKEN')}"}
+        payload = {
+            "inputs": {
+                "source_sentence": query,
+                "sentences": passages
+            }
+        }
         
-        # Attach scores and sort
+        response = requests.post(self.model_url, headers=headers, json=payload, timeout=10)
+        
+        if response.status_code != 200:
+            logger.error(f"HF API Reranker Error: {response.text}")
+            # Fallback to original order
+            return candidates[:RERANK_TOP_K]
+            
+        scores = response.json()
+        
+        # Add scores and sort
         scored_candidates = []
-        for i, candidate in enumerate(candidates):
-            candidate["reranker_score"] = float(scores[i])
-            scored_candidates.append(candidate)
+        for idx, score in enumerate(scores):
+            candidates[idx]["reranker_score"] = float(score)
+            scored_candidates.append(candidates[idx])
             
         # Sort by reranker score descending
         sorted_candidates = sorted(scored_candidates, key=lambda x: x["reranker_score"], reverse=True)

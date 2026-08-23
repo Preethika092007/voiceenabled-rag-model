@@ -3,9 +3,8 @@ import json
 import faiss
 import logging
 import time
-import torch
 from typing import List, Dict, Any
-from sentence_transformers import SentenceTransformer
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -37,11 +36,7 @@ class VectorRetriever:
                 manifest = json.load(f)
                 
             model_name = manifest.get("embedding_model", "all-MiniLM-L6-v2")
-            import gc
-            gc.collect() # Force garbage collection
-            logger.info(f"Loading embedding model: {model_name}...")
-            self.model = SentenceTransformer(model_name, device="cpu")
-            self.model.eval()
+            self.model_url = f"https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/{model_name}"
             
             logger.info("Loading FAISS index...")
             self.index = faiss.read_index(FAISS_INDEX_FILE)
@@ -62,9 +57,21 @@ class VectorRetriever:
             
         start_time = time.perf_counter()
         
-        # Encode query
-        with torch.no_grad():
-            query_embedding = self.model.encode([query], normalize_embeddings=True, convert_to_numpy=True)
+        # Encode query using HuggingFace API
+        headers = {"Authorization": f"Bearer {os.environ.get('HF_TOKEN')}"}
+        payload = {"inputs": [query]}
+        
+        # Make API call
+        response = requests.post(self.model_url, headers=headers, json=payload, timeout=10)
+        
+        if response.status_code != 200:
+            logger.error(f"HF API Error: {response.text}")
+            return []
+            
+        # Parse the embeddings
+        query_embedding_list = response.json()
+        import numpy as np
+        query_embedding = np.array(query_embedding_list, dtype='float32')
         
         # Search
         scores, indices = self.index.search(query_embedding, top_k)
