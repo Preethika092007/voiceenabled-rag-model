@@ -3,6 +3,7 @@ import json
 import logging
 import hashlib
 from datetime import datetime
+# pyrefly: ignore [missing-import]
 from datasets import load_dataset
 from typing import List, Dict, Any
 
@@ -139,12 +140,22 @@ def process_dataset():
     with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
         for record in dataset:
             # MSMARCO-XI schema inspection shows passages -> Translated_passages (or English_passages)
-            passages_dict = record.get("passages", {})
-            passages = passages_dict.get("Translated_passages", [])
+            passages_data = record.get("passages", [])
+            passages = []
             
-            # Fallback to English passages if Translated is empty/missing
-            if not passages:
-                passages = passages_dict.get("English_passages", [])
+            # Handle if it's a dict of lists (Standard HF Sequence)
+            if isinstance(passages_data, dict):
+                passages = passages_data.get("Translated_passage", passages_data.get("Translated_passages", []))
+                if not passages:
+                    passages = passages_data.get("English_passage", passages_data.get("English_passages", []))
+            # Handle if it's a list of dicts
+            elif isinstance(passages_data, list) and passages_data and isinstance(passages_data[0], dict):
+                for p in passages_data:
+                    text = p.get("Translated_passage", p.get("Translated_passages", ""))
+                    if not text:
+                        text = p.get("English_passage", p.get("English_passages", ""))
+                    if text:
+                        passages.append(text)
                 
             if not passages:
                 skipped_count += 1
