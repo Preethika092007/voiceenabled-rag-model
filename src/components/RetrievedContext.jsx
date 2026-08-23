@@ -39,7 +39,7 @@ export default function RetrievedContext({ results = [], isLoading = false }) {
                         {source}
                       </span>
                     ))}
-                    {result.reranker_score !== undefined && (
+                    {result.reranker_score != null && (
                       <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wider bg-accent/20 text-accent border border-accent/30">
                         Rerank Score: {result.reranker_score.toFixed(3)}
                       </span>
